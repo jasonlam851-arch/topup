@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Pay 收銀 / 增值終端</title>
+    <title>Apple Pay 增值終端機</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root {
@@ -13,6 +13,8 @@
             --text-muted: #86868B;
             --apple-blue: #0071E3;
             --border-color: #D2D2D7;
+            --status-green: #34C759;
+            --status-red: #FF3B30;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--text-main); }
         
@@ -20,12 +22,12 @@
 
         .dashboard { display: flex; background: var(--card-bg); border-radius: 18px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.08); width: 100%; max-width: 900px; border: 1px solid var(--border-color); }
         
-        /* 左側鏡頭 */
+        /* 鏡頭掃描區 */
         .scanner-section { flex: 1; background: #000; display: flex; flex-direction: column; position: relative; border-right: 1px solid var(--border-color); }
         #reader { width: 100%; height: 100%; min-height: 450px; }
         .scanner-overlay { position: absolute; top: 20px; left: 20px; color: white; background: rgba(0,0,0,0.6); padding: 8px 16px; border-radius: 20px; font-size: 14px; z-index: 10; font-weight: 500; }
 
-        /* 右側操作 */
+        /* 右側面板 */
         .action-section { flex: 1; padding: 40px; display: flex; flex-direction: column; }
         .title { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
         .subtitle { color: var(--text-muted); font-size: 15px; margin-bottom: 32px; }
@@ -40,28 +42,28 @@
 
         .btn-submit { background: var(--text-main); color: white; padding: 20px; border: none; border-radius: 14px; font-size: 18px; font-weight: 600; cursor: pointer; width: 100%; transition: opacity 0.2s; }
         .btn-submit:disabled { background: var(--border-color); color: #FFF; cursor: not-allowed; }
+        
+        .terminal-status { margin-top: 16px; font-size: 15px; font-weight: 500; text-align: center; display: none; }
     </style>
 </head>
 <body>
 
     <div class="dashboard">
-        <!-- 鏡頭區 -->
         <div class="scanner-section">
-            <div class="scanner-overlay" id="scanner-status">啟動相機中...</div>
+            <div class="scanner-overlay" id="scanner-status">啟動中</div>
             <div id="reader"></div>
         </div>
 
-        <!-- 操作區 -->
         <div class="action-section">
-            <div class="title"> Pay 增值終端機</div>
-            <div class="subtitle">請將顧客手機的增值條碼對準鏡頭</div>
+            <div class="title">Apple Pay 增值終端</div>
+            <div class="subtitle">請使用相機對準客戶的手機增值條碼</div>
 
             <div class="scanned-info">
-                <div class="info-label">識別 Apple ID 帳戶</div>
-                <div class="info-value" id="target-account">等待掃描...</div>
+                <div class="info-label">已綁定帳戶</div>
+                <div class="info-value" id="target-account">等待掃描</div>
             </div>
 
-            <div class="info-label" style="margin-bottom: 12px;">選擇 Cash 存入金額 (HKD)</div>
+            <div class="info-label" style="margin-bottom: 12px;">選擇充值金額 (HKD)</div>
             <div class="amount-grid">
                 <button class="btn-amt" onclick="selectAmount(100, this)">$ 100</button>
                 <button class="btn-amt" onclick="selectAmount(500, this)">$ 500</button>
@@ -69,7 +71,8 @@
                 <button class="btn-amt" onclick="selectAmount(5000, this)">$ 5000</button>
             </div>
 
-            <button class="btn-submit" id="btn-submit" onclick="executeTopup()" disabled>確認存入 Wallet</button>
+            <button class="btn-submit" id="btn-submit" onclick="executeTopup()" disabled>確認寫入金額</button>
+            <div class="terminal-status" id="action-msg">作業提示</div>
         </div>
     </div>
 
@@ -78,30 +81,46 @@
         let selectedAmount = 0;
         let html5QrcodeScanner;
 
+        function setStatus(text, color) {
+            const statusEl = document.getElementById('action-msg');
+            statusEl.innerText = text;
+            statusEl.style.color = color;
+            statusEl.style.display = 'block';
+        }
+
         function onScanSuccess(decodedText, decodedResult) {
-            // 識別 Apple Pay 的條碼格式
-            if (decodedText.startsWith("APPLE-")) {
-                const parts = decodedText.split("-");
-                if (parts.length >= 2) {
-                    targetPhone = parts[1]; 
+            try {
+                // 解密 Base64 字串
+                const decrypted = atob(decodedText);
+                
+                // 嚴格校驗：只接受增值前綴代碼，若掃到支付代碼將直接拒絕解析
+                if (decrypted.startsWith("APPLE_TOPUP_PROTOCOL_CREDIT_INBOUND_")) {
+                    const parts = decrypted.split("_");
+                    targetPhone = parts[5]; // 解構提取出儲存的手機號碼
                     
                     document.getElementById('target-account').innerText = targetPhone;
                     document.getElementById('target-account').style.color = "var(--apple-blue)";
-                    document.getElementById('scanner-status').innerText = "✓ 掃描成功";
-                    document.getElementById('scanner-status').style.background = "#34C759"; // Apple Green
+                    document.getElementById('scanner-status').innerText = "掃描成功";
+                    document.getElementById('scanner-status').style.background = "var(--status-green)";
 
                     html5QrcodeScanner.pause();
                     checkEnableButton();
                     
                     setTimeout(() => {
                         html5QrcodeScanner.resume();
-                        document.getElementById('scanner-status').innerText = "掃描中...";
+                        document.getElementById('scanner-status').innerText = "掃描中";
                         document.getElementById('scanner-status').style.background = "rgba(0,0,0,0.6)";
                     }, 3000);
+                } else if (decrypted.startsWith("APPLE_PAYMENT_PROTOCOL_")) {
+                    document.getElementById('scanner-status').innerText = "拒絕讀取：此為支付專用碼";
+                    document.getElementById('scanner-status').style.background = "var(--status-red)";
+                } else {
+                    document.getElementById('scanner-status').innerText = "不明條碼類型";
+                    document.getElementById('scanner-status').style.background = "var(--status-red)";
                 }
-            } else {
-                document.getElementById('scanner-status').innerText = "✕ 無效條碼";
-                document.getElementById('scanner-status').style.background = "#FF3B30"; // Apple Red
+            } catch (e) {
+                document.getElementById('scanner-status').innerText = "解密失敗";
+                document.getElementById('scanner-status').style.background = "var(--status-red)";
             }
         }
 
@@ -112,7 +131,7 @@
                 false
             );
             html5QrcodeScanner.render(onScanSuccess);
-            document.getElementById('scanner-status').innerText = "掃描中...";
+            document.getElementById('scanner-status').innerText = "掃描中";
         };
 
         function selectAmount(amount, btnElement) {
@@ -129,23 +148,27 @@
         function executeTopup() {
             const usersDb = JSON.parse(localStorage.getItem('apple_db_users') || "{}");
             
-            // 【關鍵修復】如果掃描器沒看過這個帳號，直接幫它建檔，防止跨設備報錯
             if (!usersDb[targetPhone]) {
-                usersDb[targetPhone] = { password: "auto-created", balance: 0 };
+                usersDb[targetPhone] = { password: "auto_setup_user", balance: 0 };
             }
 
             usersDb[targetPhone].balance += selectedAmount;
             localStorage.setItem('apple_db_users', JSON.stringify(usersDb));
 
-            alert(`✅ 成功存入 HK$ ${selectedAmount} 至 Apple Cash。\n(帳戶: ${targetPhone})`);
+            // 改用內文狀態提示，取代彈窗
+            setStatus(`交易成功：已向帳戶 ${targetPhone} 存入 HK$ ${selectedAmount}`, "var(--status-green)");
 
-            // 復原介面
+            // 歸零並重置狀態
             targetPhone = null;
             selectedAmount = 0;
-            document.getElementById('target-account').innerText = "等待掃描...";
+            document.getElementById('target-account').innerText = "等待掃描";
             document.getElementById('target-account').style.color = "var(--text-main)";
             document.querySelectorAll('.btn-amt').forEach(b => b.classList.remove('selected'));
             checkEnableButton();
+
+            setTimeout(() => {
+                document.getElementById('action-msg').style.display = 'none';
+            }, 5000);
         }
     </script>
 </body>
