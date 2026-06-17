@@ -1,421 +1,208 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Apple Pay Prototype</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>員工系統 - 增值管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
-        :root {
-            --apple-bg: #000000;
-            --apple-card-bg: #1C1C1E;
-            --apple-blue: #0A84FF;
-            --text-main: #FFFFFF;
-            --text-muted: #8E8E93;
-            --status-green: #30D158;
-            --status-red: #FF453A;
-            --clerk-bg: #F5F5F7;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--apple-bg); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
-
-        .mode-switcher { background: #2C2C2E; padding: 10px; display: flex; justify-content: space-around; z-index: 999; border-bottom: 1px solid #3A3A3C; }
-        .mode-btn { background: none; border: none; color: var(--text-muted); font-size: 14px; cursor: pointer; font-weight: 600; padding: 6px 12px; border-radius: 6px; }
-        .mode-btn.active { background: #000; color: #FFF; }
-
-        .view-section { display: none; width: 100%; flex: 1; }
-        .view-section.active { display: flex; flex-direction: column; }
-
-        /* Auth */
-        #auth-view { justify-content: center; align-items: center; padding: 40px; }
-        .auth-logo { font-size: 36px; font-weight: 600; margin-bottom: 40px; letter-spacing: -1px; }
-        .input-group { width: 100%; max-width: 320px; margin-bottom: 16px; }
-        .input-group input { width: 100%; background: var(--apple-card-bg); border: 1px solid #333; color: #FFF; padding: 16px; border-radius: 12px; font-size: 16px; outline: none; }
-        .input-group input:focus { border-color: var(--apple-blue); }
-        .btn { width: 100%; max-width: 320px; padding: 16px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; margin-bottom: 12px; }
-        .btn-primary { background: var(--text-main); color: #000; }
-        .auth-toggle { font-size: 14px; color: var(--apple-blue); margin-top: 16px; cursor: pointer; }
-        
-        .ui-notice { width: 100%; max-width: 320px; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; display: none; text-align: center; }
-        .ui-notice.error { background: rgba(255, 69, 58, 0.15); color: var(--status-red); }
-        .ui-notice.success { background: rgba(48, 209, 88, 0.15); color: var(--status-green); }
-
-        /* Wallet */
-        #wallet-view { padding: 20px; padding-top: 40px; }
-        .wallet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .wallet-header h1 { font-size: 32px; font-weight: bold; }
-        .logout-btn { color: var(--apple-blue); background: none; border: none; font-size: 16px; cursor: pointer; }
-        
-        .apple-card { background: linear-gradient(135deg, #2C2C2E 0%, #1A1A1C 100%); border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); margin-bottom: 24px; position: relative; border: 1px solid #3A3A3C; }
-        .card-brand { font-size: 22px; font-weight: 500; margin-bottom: 32px; }
-        .card-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
-        .card-balance { font-size: 34px; font-weight: 400; margin-top: 4px; color: #FFF; }
-        .card-user { position: absolute; bottom: 24px; right: 24px; font-size: 13px; color: var(--text-muted); font-family: monospace; }
-
-        .qr-area { background: var(--apple-card-bg); border-radius: 20px; padding: 24px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .tabs { display: flex; background: #000; border-radius: 10px; padding: 4px; margin-bottom: 20px; width: 100%; max-width: 300px; }
-        .tab { flex: 1; text-align: center; padding: 8px; font-size: 13px; border-radius: 6px; cursor: pointer; color: var(--text-muted); font-weight: 600; }
-        .tab.active { background: #333; color: #FFF; }
-        .qr-frame { background: #FFF; padding: 12px; border-radius: 16px; margin-bottom: 16px; }
-        .qr-frame img { width: 180px; height: 180px; display: block; }
-        .code-timer { font-size: 13px; color: var(--apple-blue); background: rgba(10, 132, 255, 0.1); padding: 6px 14px; border-radius: 20px; }
-
-        /* Clerk View */
-        #clerk-view { background: var(--clerk-bg); color: #1D1D1F; padding: 20px; align-items: center; justify-content: flex-start; overflow-y: auto; }
-        .clerk-container { background: #FFF; border-radius: 20px; width: 100%; max-width: 800px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #D2D2D7; margin-bottom: 20px; }
-        
-        @media(min-width: 600px) {
-            .clerk-container { flex-direction: row; }
-            .clerk-left { flex: 1; border-right: 1px solid #D2D2D7; }
-            .clerk-right { flex: 1; }
-        }
-
-        .clerk-left { background: #000; position: relative; min-height: 300px; }
-        #reader { width: 100%; height: 100%; }
-        .cam-status { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.7); color: #FFF; padding: 6px 12px; border-radius: 12px; font-size: 12px; z-index: 10; }
-        
-        .clerk-right { padding: 30px; display: flex; flex-direction: column; justify-content: center; }
-        .clerk-title { font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #1D1D1F; }
-        .data-box { background: var(--clerk-bg); padding: 16px; border-radius: 10px; margin-bottom: 20px; }
-        .data-label { font-size: 12px; color: #86868B; margin-bottom: 4px; }
-        .data-value { font-size: 18px; font-weight: 600; font-family: monospace; color: #1D1D1F; }
-        
-        .grid-amt { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .btn-amt { padding: 12px; border: 1px solid #D2D2D7; background: #FFF; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; color: #1D1D1F; }
-        .btn-amt.selected { background: var(--apple-blue); color: #FFF; border-color: var(--apple-blue); }
-        .btn-action { background: #1D1D1F; color: #FFF; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; text-align: center; width: 100%; }
-        .btn-action:disabled { background: #E5E5EA; color: #AEAEB2; cursor: not-allowed; }
-
-        .dev-test-panel { width: 100%; max-width: 800px; background: #2C2C2E; padding: 15px; border-radius: 14px; text-align: center; }
-        .dev-btn { background: var(--apple-blue); border: none; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #1c1c1e; }
+        .hidden { display: none !important; }
     </style>
 </head>
-<body>
+<body class="text-white flex justify-center min-h-screen pb-10">
 
-    <div class="mode-switcher">
-        <button class="mode-btn active" id="m-user" onclick="switchSystemMode('user')">切換至用戶手機端</button>
-        <button class="mode-btn" id="m-clerk" onclick="switchSystemMode('clerk')">切換至店員收銀端</button>
-    </div>
-
-    <div id="auth-view" class="view-section active">
-        <div class="auth-logo">Apple Pay</div>
-        <div class="ui-notice error" id="auth-error"></div>
-        <div class="input-group"><input type="tel" id="phone" placeholder="電話號碼" value="0912345678"></div>
-        <div class="input-group"><input type="password" id="password" placeholder="密碼" value="1234"></div>
-        <button class="btn btn-primary" onclick="processAuth()">確認</button>
-        <div class="auth-toggle" id="auth-toggle-btn" onclick="toggleAuthType()">建立新帳戶</div>
-    </div>
-
-    <div id="wallet-view" class="view-section">
-        <div class="wallet-header">
-            <h1>Wallet</h1>
-            <button class="logout-btn" onclick="processLogout()">登出</button>
-        </div>
-        <div class="apple-card">
-            <div class="card-brand">Apple Cash</div>
-            <div class="card-label">Current Balance</div>
-            <div class="card-balance" id="wallet-balance">HK$ 0</div>
-            <div class="card-user" id="wallet-account">0000***000</div>
-        </div>
-        <div class="qr-area">
-            <div class="tabs">
-                <div class="tab active" id="t-pay" onclick="toggleQrType('pay')">支付條碼</div>
-                <div class="tab" id="t-topup" onclick="toggleQrType('topup')">增值條碼</div>
-            </div>
-            <div class="qr-frame">
-                <img id="qr-element" src="" alt="QR">
-            </div>
-            <div class="code-timer" id="timer-element">更新中</div>
-        </div>
-    </div>
-
-    <div id="clerk-view" class="view-section">
-        <div class="clerk-container">
-            <div class="clerk-left">
-                <div class="cam-status" id="cam-status-txt">鏡頭就緒中</div>
-                <div id="reader"></div>
-            </div>
-            <div class="clerk-right">
-                <div class="clerk-title">增值作業終端</div>
-                <div class="ui-notice" id="clerk-notice" style="max-width:100%;"></div>
-
-                <div class="data-box">
-                    <div class="data-label">讀取到之 Apple ID 帳戶</div>
-                    <div class="data-value" id="scanned-user">尚未讀取數據</div>
-                </div>
-                
-                <div class="data-label" style="margin-bottom:8px;">選擇增值金額 (HKD)</div>
-                <div class="grid-amt">
-                    <button class="btn-amt" onclick="selectAmount(100, this)">$100</button>
-                    <button class="btn-amt" onclick="selectAmount(500, this)">$500</button>
-                    <button class="btn-amt" onclick="selectAmount(1000, this)">$1000</button>
-                    <button class="btn-amt" onclick="selectAmount(5000, this)">$5000</button>
-                </div>
-                
-                <button class="btn-action" id="submit-topup-btn" onclick="commitTopup()" disabled>執行寫入金額</button>
-            </div>
-        </div>
-
-        <div class="dev-test-panel">
-            <p style="font-size:13px; color:#AEAEB2;">【開發者測試管道】若因瀏覽器沙盒限制無法讀取，可點擊下方進行當前用戶模擬：</p>
-            <button class="dev-btn" onclick="mockScanCurrentUser()">一鍵讀取當前登入之手機帳號</button>
-        </div>
-    </div>
-
-    <script>
-        let isLoginType = true;
-        let loggedInUser = null;
-        let selectedQrType = 'pay';
-        let countdownSec = 600;
-        let globalTimer;
+    <div class="w-full max-w-md p-4 flex flex-col pt-8">
         
-        let scannedAccountResult = null;
-        let chosenAmount = 0;
-        let qrScannerInstance = null;
-        let isScanLocked = false; // 防重複觸發解碼鎖
+        <div id="staff-auth" class="bg-gray-800 rounded-3xl p-8 shadow-lg mt-10">
+            <h1 class="text-2xl font-bold mb-6 text-center">員工登入</h1>
+            <div class="flex flex-col gap-4">
+                <input type="text" id="staff-id" placeholder="員工帳號" class="p-3 bg-gray-700 rounded-xl outline-none text-white placeholder-gray-400">
+                <input type="password" id="staff-pass" placeholder="密碼" class="p-3 bg-gray-700 rounded-xl outline-none text-white placeholder-gray-400">
+                <button id="btn-staff-login" class="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl font-semibold mt-2 transition">系統登入</button>
+                <p id="staff-error" class="text-red-400 text-sm text-center"></p>
+            </div>
+        </div>
 
-        function getDatabase() {
-            try {
-                return JSON.parse(localStorage.getItem('apple_db_users') || "{}");
-            } catch(e) {
-                return {};
-            }
-        }
-        function saveDatabase(db) {
-            localStorage.setItem('apple_db_users', JSON.stringify(db));
-        }
+        <div id="staff-dashboard" class="hidden flex flex-col gap-6">
+            <div class="flex justify-between items-center px-2">
+                <h1 class="text-xl font-bold">增值終端機</h1>
+                <span class="text-gray-400 text-sm">員工: P001</span>
+            </div>
 
-        function switchSystemMode(mode) {
-            document.getElementById('m-user').classList.toggle('active', mode === 'user');
-            document.getElementById('m-clerk').classList.toggle('active', mode === 'clerk');
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            <div class="bg-gray-800 rounded-3xl p-4 shadow-lg">
+                <h2 class="text-lg font-semibold mb-3 text-center">掃描客戶二維碼</h2>
+                <div id="reader" class="w-full rounded-2xl overflow-hidden border-2 border-gray-700"></div>
+            </div>
+
+            <div id="topup-panel" class="hidden bg-gray-800 rounded-3xl p-6 shadow-lg">
+                <h2 class="text-lg font-semibold mb-4 border-b border-gray-700 pb-2">客戶資訊</h2>
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-400">名稱:</span>
+                    <span id="info-name" class="font-bold">---</span>
+                </div>
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-400">電話:</span>
+                    <span id="info-phone" class="font-bold">---</span>
+                </div>
+                <div class="flex justify-between mb-6">
+                    <span class="text-gray-400">當前餘額:</span>
+                    <span id="info-balance" class="font-bold text-green-400">$0.00</span>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <input type="number" id="topup-amount" placeholder="輸入增值金額" class="p-4 bg-gray-700 rounded-xl outline-none text-xl text-center font-bold text-white">
+                    <button id="btn-submit-topup" class="bg-white text-black p-4 rounded-xl font-bold text-lg hover:bg-gray-200 transition">確認增值</button>
+                    <p id="topup-msg" class="text-center text-sm font-semibold mt-2"></p>
+                </div>
+            </div>
             
-            if (mode === 'user') {
-                if (loggedInUser) {
-                    document.getElementById('wallet-view').classList.add('active');
-                    syncBalanceDisplay();
-                } else {
-                    document.getElementById('auth-view').classList.add('active');
+            <button id="btn-reset-scan" class="hidden bg-gray-700 text-white p-3 rounded-xl font-semibold">重新掃描</button>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, get, update, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDnUjBwJkLhyvLGRVOHJuAWXLCV2F_WIg",
+            authDomain: "apple-pay-1c569.firebaseapp.com",
+            projectId: "apple-pay-1c569",
+            storageBucket: "apple-pay-1c569.firebasestorage.app",
+            messagingSenderId: "556609511982",
+            appId: "1:556609511982:web:c5cd4cf609c220bacbf5bf",
+            measurementId: "G-6MPCREG7GW",
+            databaseURL: "https://apple-pay-1c569-default-rtdb.firebaseio.com"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        
+        let html5QrcodeScanner;
+        let targetUid = null;
+
+        document.getElementById('btn-staff-login').addEventListener('click', async () => {
+            const id = document.getElementById('staff-id').value;
+            const pass = document.getElementById('staff-pass').value;
+            
+            if (id === 'P001' && pass === 'P001') {
+                try {
+                    await signInAnonymously(auth);
+                    document.getElementById('staff-auth').classList.add('hidden');
+                    document.getElementById('staff-dashboard').classList.remove('hidden');
+                    initScanner();
+                } catch (error) {
+                    document.getElementById('staff-error').innerText = "系統連線錯誤。";
                 }
-                if(qrScannerInstance) { try { qrScannerInstance.clear(); }catch(e){} }
             } else {
-                document.getElementById('clerk-view').classList.add('active');
-                initCameraScanner();
+                document.getElementById('staff-error').innerText = "帳號或密碼錯誤。";
+            }
+        });
+
+        function initScanner() {
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader", 
+                { fps: 10, qrbox: {width: 250, height: 250}, aspectRatio: 1.0 },
+                false
+            );
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
+
+        async function onScanSuccess(decodedText, decodedResult) {
+            try {
+                const data = JSON.parse(decodedText);
+                if (data.type === "TOPUP" && data.uid) {
+                    html5QrcodeScanner.clear();
+                    document.getElementById('reader').classList.add('hidden');
+                    
+                    targetUid = data.uid;
+                    await loadClientInfo(targetUid);
+                } else {
+                    alert("請掃描正確的「增值二維碼」。\n此二維碼類型為: " + (data.type || "未知"));
+                }
+            } catch (e) {
+                console.log("非系統支援的二維碼格式。");
             }
         }
 
-        function toggleAuthType() {
-            isLoginType = !isLoginType;
-            document.getElementById('auth-title').innerText = isLoginType ? '登入您的 Apple ID' : '建立新的 Apple ID';
-            document.getElementById('auth-toggle-btn').innerText = isLoginType ? '建立新帳戶' : '返回登入介面';
-            document.getElementById('auth-error').style.display = 'none';
+        function onScanFailure(error) {
         }
 
-        function processAuth() {
-            const phone = document.getElementById('phone').value.trim();
-            const pass = document.getElementById('password').value.trim();
-            const errBox = document.getElementById('auth-error');
-            errBox.style.display = 'none';
+        async function loadClientInfo(uid) {
+            const snapshot = await get(ref(db, 'users/' + uid));
+            
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                document.getElementById('info-name').innerText = userData.name;
+                document.getElementById('info-phone').innerText = userData.phone;
+                document.getElementById('info-balance').innerText = `$${parseFloat(userData.balance).toFixed(2)}`;
+                
+                document.getElementById('topup-panel').classList.remove('hidden');
+                document.getElementById('btn-reset-scan').classList.remove('hidden');
+            } else {
+                alert("找不到該客戶資料。");
+                resetScanner();
+            }
+        }
 
-            if (!phone || !pass) {
-                errBox.innerText = '請填寫完整欄位';
-                errBox.style.display = 'block';
+        document.getElementById('btn-submit-topup').addEventListener('click', async () => {
+            const amountInput = document.getElementById('topup-amount').value;
+            const amount = parseFloat(amountInput);
+            const msgEl = document.getElementById('topup-msg');
+            
+            if (isNaN(amount) || amount <= 0) {
+                msgEl.innerText = "請輸入有效的增值金額。";
+                msgEl.className = "text-center text-sm font-semibold mt-2 text-red-400";
                 return;
             }
 
-            let db = getDatabase();
-            if (isLoginType) {
-                if (!db[phone]) {
-                    db[phone] = { password: pass, balance: 0 };
-                    saveDatabase(db);
-                } else if (db[phone].password !== pass) {
-                    errBox.innerText = '密碼不正確';
-                    errBox.style.display = 'block';
-                    return;
-                }
-                loggedInUser = phone;
-                enterWallet();
-            } else {
-                if (db[phone]) {
-                    errBox.innerText = '該電話號碼已被註冊';
-                    errBox.style.display = 'block';
-                    return;
-                }
-                db[phone] = { password: pass, balance: 0 };
-                saveDatabase(db);
-                loggedInUser = phone;
-                enterWallet();
-            }
-        }
-
-        function enterWallet() {
-            document.getElementById('auth-view').classList.remove('active');
-            document.getElementById('wallet-view').classList.add('active');
-            const masked = loggedInUser.length > 4 ? loggedInUser.substring(0, 4) + '***' + loggedInUser.substring(loggedInUser.length - 3) : loggedInUser;
-            document.getElementById('wallet-account').innerText = masked;
-            syncBalanceDisplay();
-            generateTokens();
-            startTokenTimer();
-        }
-
-        function processLogout() {
-            clearInterval(globalTimer);
-            loggedInUser = null;
-            document.getElementById('wallet-view').classList.remove('active');
-            document.getElementById('auth-view').classList.add('active');
-        }
-
-        function syncBalanceDisplay() {
-            if (!loggedInUser) return;
-            let db = getDatabase();
-            let amt = db[loggedInUser] ? db[loggedInUser].balance : 0;
-            document.getElementById('wallet-balance').innerText = `HK$ ${amt.toLocaleString()}`;
-        }
-
-        function encodeToken(type) {
-            const salt = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const epoch = Date.now();
-            let securePayload = type === 'pay' 
-                ? `PROTOCOL_PAYMENT_SECURE_${loggedInUser}_${salt}_${epoch}`
-                : `PROTOCOL_TOPUP_SECURE_${loggedInUser}_${salt}_${epoch}`;
-            return btoa(securePayload); 
-        }
-
-        function generateTokens() {
-            localStorage.setItem('cached_pay_token', encodeToken('pay'));
-            localStorage.setItem('cached_topup_token', encodeToken('topup'));
-            renderQrImage();
-            countdownSec = 600;
-        }
-
-        function renderQrImage() {
-            const targetToken = selectedQrType === 'pay' ? localStorage.getItem('cached_pay_token') : localStorage.getItem('cached_topup_token');
-            if(!targetToken) return;
-            document.getElementById('qr-element').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${targetToken}`;
-        }
-
-        function toggleQrType(type) {
-            selectedQrType = type;
-            document.getElementById('t-pay').classList.toggle('active', type === 'pay');
-            document.getElementById('t-topup').classList.toggle('active', type === 'topup');
-            renderQrImage();
-        }
-
-        function startTokenTimer() {
-            clearInterval(globalTimer);
-            globalTimer = setInterval(() => {
-                countdownSec--;
-                let m = Math.floor(countdownSec / 60).toString().padStart(2, '0');
-                let s = (countdownSec % 60).toString().padStart(2, '0');
-                document.getElementById('timer-element').innerText = `動態安全碼將於 ${m}:${s} 更新`;
-                if (countdownSec <= 0) generateTokens();
-            }, 1000);
-        }
-
-        // 輪詢同步（保持分頁間數據最速同步）
-        setInterval(() => {
-            if (loggedInUser && document.getElementById('wallet-view').classList.contains('active')) {
-                syncBalanceDisplay();
-            }
-        }, 1000);
-
-        // ====== 店員端代碼 ======
-        function initCameraScanner() {
-            if(qrScannerInstance) { try { qrScannerInstance.clear(); } catch(e){} }
-            isScanLocked = false;
-            document.getElementById('cam-status-txt').innerText = "掃描中";
-            document.getElementById('cam-status-txt').style.background = "rgba(0,0,0,0.7)";
-
-            qrScannerInstance = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 200 }, false);
-            qrScannerInstance.render(onScanComplete, onScanError);
-        }
-
-        function onScanError(err) { /* 靜態排除環境雜訊 */ }
-
-        function onScanComplete(decodedText) {
-            if (isScanLocked) return; // 鎖定狀態下拒絕執行，避免重複解碼卡死
+            msgEl.innerText = "處理中...";
+            msgEl.className = "text-center text-sm font-semibold mt-2 text-blue-400";
 
             try {
-                const plainText = atob(decodedText.trim());
+                const userRef = ref(db, 'users/' + targetUid);
+                const snapshot = await get(userRef);
+                const currentBalance = parseFloat(snapshot.val().balance);
+                const newBalance = currentBalance + amount;
+
+                await update(userRef, {
+                    balance: newBalance
+                });
+
+                await push(ref(db, 'logs'), {
+                    userId: targetUid,
+                    staffId: "P001",
+                    amount: amount,
+                    type: "TOPUP",
+                    timestamp: serverTimestamp()
+                });
+
+                msgEl.innerText = "增值成功！";
+                msgEl.className = "text-center text-sm font-semibold mt-2 text-green-400";
+                document.getElementById('info-balance').innerText = `$${newBalance.toFixed(2)}`;
+                document.getElementById('topup-amount').value = "";
                 
-                if (plainText.startsWith("PROTOCOL_TOPUP_SECURE_")) {
-                    isScanLocked = true; // 開啟防崩潰鎖
-                    const structuralSegments = plainText.split("_");
-                    scannedAccountResult = structuralSegments[3]; // 抽取出電話
-                    
-                    document.getElementById('scanned-user').innerText = scannedAccountResult;
-                    document.getElementById('scanned-user').style.color = "var(--apple-blue)";
-                    document.getElementById('cam-status-txt').innerText = "讀取成功";
-                    document.getElementById('cam-status-txt').style.background = "var(--status-green)";
-                    
-                    verifyTerminalButtonState();
-                } else if (plainText.startsWith("PROTOCOL_PAYMENT_SECURE_")) {
-                    document.getElementById('cam-status-txt').innerText = "拒絕：此為支付條碼";
-                    document.getElementById('cam-status-txt').style.background = "var(--status-red)";
-                }
-            } catch(err) {
-                // 如果解密失敗不做任何動作，等下一次聚焦捕捉
+            } catch (error) {
+                msgEl.innerText = "增值失敗，請重試。";
+                msgEl.className = "text-center text-sm font-semibold mt-2 text-red-400";
             }
-        }
+        });
 
-        function mockScanCurrentUser() {
-            if (!loggedInUser) {
-                const clkNotice = document.getElementById('clerk-notice');
-                clkNotice.className = "ui-notice error";
-                clkNotice.innerText = "無法讀取：手機端目前未登入任何帳號";
-                clkNotice.style.display = 'block';
-                return;
-            }
-            scannedAccountResult = loggedInUser;
-            document.getElementById('scanned-user').innerText = scannedAccountResult;
-            document.getElementById('scanned-user').style.color = "var(--apple-blue)";
-            verifyTerminalButtonState();
-        }
+        document.getElementById('btn-reset-scan').addEventListener('click', resetScanner);
 
-        function selectAmount(val, btn) {
-            document.querySelectorAll('.btn-amt').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            chosenAmount = val;
-            verifyTerminalButtonState();
-        }
-
-        function verifyTerminalButtonState() {
-            document.getElementById('submit-topup-btn').disabled = !(scannedAccountResult && chosenAmount > 0);
-        }
-
-        function commitTopup() {
-            if (!scannedAccountResult || chosenAmount <= 0) return;
-
-            let db = getDatabase();
-            if (!db[scannedAccountResult]) {
-                db[scannedAccountResult] = { password: "auto_provisioned", balance: 0 };
-            }
-
-            db[scannedAccountResult].balance += chosenAmount;
-            saveDatabase(db);
-
-            // 內文動態提示
-            const clkNotice = document.getElementById('clerk-notice');
-            clkNotice.className = "ui-notice success";
-            clkNotice.innerText = `交易成功：已向帳戶 ${scannedAccountResult} 存入 HK$ ${chosenAmount}`;
-            clkNotice.style.display = 'block';
-
-            // 歸零並完全解放系統，迎接下一次操作
-            scannedAccountResult = null;
-            chosenAmount = 0;
-            isScanLocked = false; 
-            document.getElementById('scanned-user').innerText = "等待下一筆掃描";
-            document.getElementById('scanned-user').style.color = "#1D1D1F";
-            document.querySelectorAll('.btn-amt').forEach(b => b.classList.remove('selected'));
-            verifyTerminalButtonState();
-
-            document.getElementById('cam-status-txt').innerText = "掃描中";
-            document.getElementById('cam-status-txt').style.background = "rgba(0,0,0,0.7)";
-
-            setTimeout(() => {
-                clkNotice.style.display = 'none';
-            }, 4000);
+        function resetScanner() {
+            targetUid = null;
+            document.getElementById('topup-panel').classList.add('hidden');
+            document.getElementById('btn-reset-scan').classList.add('hidden');
+            document.getElementById('reader').classList.remove('hidden');
+            document.getElementById('topup-msg').innerText = "";
+            document.getElementById('topup-amount').value = "";
+            initScanner();
         }
     </script>
 </body>
