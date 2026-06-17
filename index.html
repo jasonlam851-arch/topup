@@ -18,19 +18,16 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-
         body { background-color: var(--apple-bg); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
 
-        /* 全局頂部切換特區（開發調試用） */
         .mode-switcher { background: #2C2C2E; padding: 10px; display: flex; justify-content: space-around; z-index: 999; border-bottom: 1px solid #3A3A3C; }
         .mode-btn { background: none; border: none; color: var(--text-muted); font-size: 14px; cursor: pointer; font-weight: 600; padding: 6px 12px; border-radius: 6px; }
         .mode-btn.active { background: #000; color: #FFF; }
 
-        /* 視圖容器 */
         .view-section { display: none; width: 100%; flex: 1; }
         .view-section.active { display: flex; flex-direction: column; }
 
-        /* ====== 1. 認證畫面 ====== */
+        /* Auth */
         #auth-view { justify-content: center; align-items: center; padding: 40px; }
         .auth-logo { font-size: 36px; font-weight: 600; margin-bottom: 40px; letter-spacing: -1px; }
         .input-group { width: 100%; max-width: 320px; margin-bottom: 16px; }
@@ -39,11 +36,12 @@
         .btn { width: 100%; max-width: 320px; padding: 16px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; margin-bottom: 12px; }
         .btn-primary { background: var(--text-main); color: #000; }
         .auth-toggle { font-size: 14px; color: var(--apple-blue); margin-top: 16px; cursor: pointer; }
+        
         .ui-notice { width: 100%; max-width: 320px; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; display: none; text-align: center; }
         .ui-notice.error { background: rgba(255, 69, 58, 0.15); color: var(--status-red); }
         .ui-notice.success { background: rgba(48, 209, 88, 0.15); color: var(--status-green); }
 
-        /* ====== 2. 用戶錢包畫面 ====== */
+        /* Wallet */
         #wallet-view { padding: 20px; padding-top: 40px; }
         .wallet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .wallet-header h1 { font-size: 32px; font-weight: bold; }
@@ -63,14 +61,21 @@
         .qr-frame img { width: 180px; height: 180px; display: block; }
         .code-timer { font-size: 13px; color: var(--apple-blue); background: rgba(10, 132, 255, 0.1); padding: 6px 14px; border-radius: 20px; }
 
-        /* ====== 3. 店員增值端畫面 ====== */
-        #clerk-view { background: var(--clerk-bg); color: #1D1D1F; padding: 30px; align-items: center; justify-content: center; }
-        .clerk-container { background: #FFF; border-radius: 20px; width: 100%; max-width: 800px; display: flex; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #D2D2D7; }
-        .clerk-left { flex: 1; background: #000; position: relative; min-height: 380px; }
+        /* Clerk View */
+        #clerk-view { background: var(--clerk-bg); color: #1D1D1F; padding: 20px; align-items: center; justify-content: flex-start; overflow-y: auto; }
+        .clerk-container { background: #FFF; border-radius: 20px; width: 100%; max-width: 800px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #D2D2D7; margin-bottom: 20px; }
+        
+        @media(min-width: 600px) {
+            .clerk-container { flex-direction: row; }
+            .clerk-left { flex: 1; border-right: 1px solid #D2D2D7; }
+            .clerk-right { flex: 1; }
+        }
+
+        .clerk-left { background: #000; position: relative; min-height: 300px; }
         #reader { width: 100%; height: 100%; }
         .cam-status { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.7); color: #FFF; padding: 6px 12px; border-radius: 12px; font-size: 12px; z-index: 10; }
         
-        .clerk-right { flex: 1; padding: 30px; display: flex; flex-direction: column; justify-content: center; }
+        .clerk-right { padding: 30px; display: flex; flex-direction: column; justify-content: center; }
         .clerk-title { font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #1D1D1F; }
         .data-box { background: var(--clerk-bg); padding: 16px; border-radius: 10px; margin-bottom: 20px; }
         .data-label { font-size: 12px; color: #86868B; margin-bottom: 4px; }
@@ -79,8 +84,11 @@
         .grid-amt { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .btn-amt { padding: 12px; border: 1px solid #D2D2D7; background: #FFF; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; color: #1D1D1F; }
         .btn-amt.selected { background: var(--apple-blue); color: #FFF; border-color: var(--apple-blue); }
-        .btn-action { background: #1D1D1F; color: #FFF; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
+        .btn-action { background: #1D1D1F; color: #FFF; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; text-align: center; width: 100%; }
         .btn-action:disabled { background: #E5E5EA; color: #AEAEB2; cursor: not-allowed; }
+
+        .dev-test-panel { width: 100%; max-width: 800px; background: #2C2C2E; padding: 15px; border-radius: 14px; text-align: center; }
+        .dev-btn { background: var(--apple-blue); border: none; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -93,8 +101,8 @@
     <div id="auth-view" class="view-section active">
         <div class="auth-logo">Apple Pay</div>
         <div class="ui-notice error" id="auth-error"></div>
-        <div class="input-group"><input type="tel" id="phone" placeholder="電話號碼"></div>
-        <div class="input-group"><input type="password" id="password" placeholder="密碼"></div>
+        <div class="input-group"><input type="tel" id="phone" placeholder="電話號碼" value="0912345678"></div>
+        <div class="input-group"><input type="password" id="password" placeholder="密碼" value="1234"></div>
         <button class="btn btn-primary" onclick="processAuth()">確認</button>
         <div class="auth-toggle" id="auth-toggle-btn" onclick="toggleAuthType()">建立新帳戶</div>
     </div>
@@ -130,8 +138,7 @@
             </div>
             <div class="clerk-right">
                 <div class="clerk-title">增值作業終端</div>
-                
-                <div class="ui-notice" id="clerk-notice"></div>
+                <div class="ui-notice" id="clerk-notice" style="max-width:100%;"></div>
 
                 <div class="data-box">
                     <div class="data-label">讀取到之 Apple ID 帳戶</div>
@@ -149,10 +156,14 @@
                 <button class="btn-action" id="submit-topup-btn" onclick="commitTopup()" disabled>執行寫入金額</button>
             </div>
         </div>
+
+        <div class="dev-test-panel">
+            <p style="font-size:13px; color:#AEAEB2;">【開發者測試管道】若因瀏覽器沙盒限制無法讀取，可點擊下方進行當前用戶模擬：</p>
+            <button class="dev-btn" onclick="mockScanCurrentUser()">一鍵讀取當前登入之手機帳號</button>
+        </div>
     </div>
 
     <script>
-        // 常量與狀態核心
         let isLoginType = true;
         let loggedInUser = null;
         let selectedQrType = 'pay';
@@ -162,8 +173,8 @@
         let scannedAccountResult = null;
         let chosenAmount = 0;
         let qrScannerInstance = null;
+        let isScanLocked = false; // 防重複觸發解碼鎖
 
-        // 初始化安全本地資料庫（防崩潰修正）
         function getDatabase() {
             try {
                 return JSON.parse(localStorage.getItem('apple_db_users') || "{}");
@@ -175,11 +186,9 @@
             localStorage.setItem('apple_db_users', JSON.stringify(db));
         }
 
-        // 系統分流切換
         function switchSystemMode(mode) {
             document.getElementById('m-user').classList.toggle('active', mode === 'user');
             document.getElementById('m-clerk').classList.toggle('active', mode === 'clerk');
-            
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             
             if (mode === 'user') {
@@ -196,7 +205,6 @@
             }
         }
 
-        // 認證邏輯群
         function toggleAuthType() {
             isLoginType = !isLoginType;
             document.getElementById('auth-title').innerText = isLoginType ? '登入您的 Apple ID' : '建立新的 Apple ID';
@@ -217,7 +225,6 @@
             }
 
             let db = getDatabase();
-
             if (isLoginType) {
                 if (!db[phone]) {
                     db[phone] = { password: pass, balance: 0 };
@@ -245,10 +252,8 @@
         function enterWallet() {
             document.getElementById('auth-view').classList.remove('active');
             document.getElementById('wallet-view').classList.add('active');
-            
             const masked = loggedInUser.length > 4 ? loggedInUser.substring(0, 4) + '***' + loggedInUser.substring(loggedInUser.length - 3) : loggedInUser;
             document.getElementById('wallet-account').innerText = masked;
-            
             syncBalanceDisplay();
             generateTokens();
             startTokenTimer();
@@ -259,8 +264,6 @@
             loggedInUser = null;
             document.getElementById('wallet-view').classList.remove('active');
             document.getElementById('auth-view').classList.add('active');
-            document.getElementById('phone').value = '';
-            document.getElementById('password').value = '';
         }
 
         function syncBalanceDisplay() {
@@ -270,25 +273,18 @@
             document.getElementById('wallet-balance').innerText = `HK$ ${amt.toLocaleString()}`;
         }
 
-        // 加密金鑰演算法（分流隔離字串結構）
         function encodeToken(type) {
             const salt = Math.random().toString(36).substring(2, 8).toUpperCase();
             const epoch = Date.now();
-            let securePayload = "";
-            
-            if (type === 'pay') {
-                securePayload = `TX_PROTOCOL_INTEGRITY_PAYMENT_VERIFIED_${loggedInUser}_${salt}_${epoch}`;
-            } else {
-                securePayload = `TX_PROTOCOL_INTEGRITY_TOPUP_LOADER_${loggedInUser}_${salt}_${epoch}`;
-            }
+            let securePayload = type === 'pay' 
+                ? `PROTOCOL_PAYMENT_SECURE_${loggedInUser}_${salt}_${epoch}`
+                : `PROTOCOL_TOPUP_SECURE_${loggedInUser}_${salt}_${epoch}`;
             return btoa(securePayload); 
         }
 
         function generateTokens() {
-            const payToken = encodeToken('pay');
-            const topupToken = encodeToken('topup');
-            localStorage.setItem('cached_pay_token', payToken);
-            localStorage.setItem('cached_topup_token', topupToken);
+            localStorage.setItem('cached_pay_token', encodeToken('pay'));
+            localStorage.setItem('cached_topup_token', encodeToken('topup'));
             renderQrImage();
             countdownSec = 600;
         }
@@ -317,62 +313,64 @@
             }, 1000);
         }
 
-        // 核心修正：每秒即時強制同步機制，保證寫入後畫面立刻反應
+        // 輪詢同步（保持分頁間數據最速同步）
         setInterval(() => {
             if (loggedInUser && document.getElementById('wallet-view').classList.contains('active')) {
                 syncBalanceDisplay();
             }
         }, 1000);
 
-
-        // ====== 店員端相機驅動核心 ======
+        // ====== 店員端代碼 ======
         function initCameraScanner() {
             if(qrScannerInstance) { try { qrScannerInstance.clear(); } catch(e){} }
-            
+            isScanLocked = false;
             document.getElementById('cam-status-txt').innerText = "掃描中";
             document.getElementById('cam-status-txt').style.background = "rgba(0,0,0,0.7)";
 
-            qrScannerInstance = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 220 }, false);
-            qrScannerInstance.render(onScanComplete);
+            qrScannerInstance = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 200 }, false);
+            qrScannerInstance.render(onScanComplete, onScanError);
         }
 
+        function onScanError(err) { /* 靜態排除環境雜訊 */ }
+
         function onScanComplete(decodedText) {
-            const clkNotice = document.getElementById('clerk-notice');
-            clkNotice.style.display = 'none';
+            if (isScanLocked) return; // 鎖定狀態下拒絕執行，避免重複解碼卡死
 
             try {
-                const plainText = atob(decodedText);
+                const plainText = atob(decodedText.trim());
                 
-                // 驗證是否為增值條碼
-                if (plainText.startsWith("TX_PROTOCOL_INTEGRITY_TOPUP_LOADER_")) {
+                if (plainText.startsWith("PROTOCOL_TOPUP_SECURE_")) {
+                    isScanLocked = true; // 開啟防崩潰鎖
                     const structuralSegments = plainText.split("_");
-                    scannedAccountResult = structuralSegments[5]; // 取出電話
+                    scannedAccountResult = structuralSegments[3]; // 抽取出電話
                     
                     document.getElementById('scanned-user').innerText = scannedAccountResult;
                     document.getElementById('scanned-user').style.color = "var(--apple-blue)";
                     document.getElementById('cam-status-txt').innerText = "讀取成功";
                     document.getElementById('cam-status-txt').style.background = "var(--status-green)";
                     
-                    try { qrScannerInstance.pause(); } catch(e){}
                     verifyTerminalButtonState();
-
-                    setTimeout(() => {
-                        try { qrScannerInstance.resume(); } catch(e){}
-                        document.getElementById('cam-status-txt').innerText = "掃描中";
-                        document.getElementById('cam-status-txt').style.background = "rgba(0,0,0,0.7)";
-                    }, 2500);
-
-                } else if (plainText.startsWith("TX_PROTOCOL_INTEGRITY_PAYMENT_VERIFIED_")) {
+                } else if (plainText.startsWith("PROTOCOL_PAYMENT_SECURE_")) {
                     document.getElementById('cam-status-txt').innerText = "拒絕：此為支付條碼";
-                    document.getElementById('cam-status-txt').style.background = "var(--status-red)";
-                } else {
-                    document.getElementById('cam-status-txt').innerText = "無效協議條碼";
                     document.getElementById('cam-status-txt').style.background = "var(--status-red)";
                 }
             } catch(err) {
-                document.getElementById('cam-status-txt').innerText = "解析失敗";
-                document.getElementById('cam-status-txt').style.background = "var(--status-red)";
+                // 如果解密失敗不做任何動作，等下一次聚焦捕捉
             }
+        }
+
+        function mockScanCurrentUser() {
+            if (!loggedInUser) {
+                const clkNotice = document.getElementById('clerk-notice');
+                clkNotice.className = "ui-notice error";
+                clkNotice.innerText = "無法讀取：手機端目前未登入任何帳號";
+                clkNotice.style.display = 'block';
+                return;
+            }
+            scannedAccountResult = loggedInUser;
+            document.getElementById('scanned-user').innerText = scannedAccountResult;
+            document.getElementById('scanned-user').style.color = "var(--apple-blue)";
+            verifyTerminalButtonState();
         }
 
         function selectAmount(val, btn) {
@@ -386,13 +384,10 @@
             document.getElementById('submit-topup-btn').disabled = !(scannedAccountResult && chosenAmount > 0);
         }
 
-        // 金額寫入與通知處理
         function commitTopup() {
             if (!scannedAccountResult || chosenAmount <= 0) return;
 
             let db = getDatabase();
-            
-            // 若本機沙盒中沒有此用戶，直接為其開通，杜絕找不到帳戶的錯誤
             if (!db[scannedAccountResult]) {
                 db[scannedAccountResult] = { password: "auto_provisioned", balance: 0 };
             }
@@ -400,19 +395,23 @@
             db[scannedAccountResult].balance += chosenAmount;
             saveDatabase(db);
 
-            // 於店員介面印出成功狀態
+            // 內文動態提示
             const clkNotice = document.getElementById('clerk-notice');
             clkNotice.className = "ui-notice success";
-            clkNotice.innerText = `成功將 HK$ ${chosenAmount} 寫入帳戶 ${scannedAccountResult}`;
+            clkNotice.innerText = `交易成功：已向帳戶 ${scannedAccountResult} 存入 HK$ ${chosenAmount}`;
             clkNotice.style.display = 'block';
 
-            // 重設欄位
+            // 歸零並完全解放系統，迎接下一次操作
             scannedAccountResult = null;
             chosenAmount = 0;
+            isScanLocked = false; 
             document.getElementById('scanned-user').innerText = "等待下一筆掃描";
             document.getElementById('scanned-user').style.color = "#1D1D1F";
             document.querySelectorAll('.btn-amt').forEach(b => b.classList.remove('selected'));
             verifyTerminalButtonState();
+
+            document.getElementById('cam-status-txt').innerText = "掃描中";
+            document.getElementById('cam-status-txt').style.background = "rgba(0,0,0,0.7)";
 
             setTimeout(() => {
                 clkNotice.style.display = 'none';
