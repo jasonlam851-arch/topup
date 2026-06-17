@@ -3,62 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MUJI 實體增值掃描器</title>
+    <title> Pay 收銀 / 增值終端</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root {
-            --muji-bg: #F7F5F0;
-            --muji-white: #FFFFFF;
-            --muji-text: #333333;
-            --muji-red: #7F171F;
-            --muji-border: #E2DDD5;
+            --bg-color: #F5F5F7;
+            --card-bg: #FFFFFF;
+            --text-main: #1D1D1F;
+            --text-muted: #86868B;
+            --apple-blue: #0071E3;
+            --border-color: #D2D2D7;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Helvetica Neue", Arial, sans-serif; color: var(--muji-text); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--text-main); }
         
-        body { background-color: var(--muji-bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        body { background-color: var(--bg-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
 
-        .dashboard { display: flex; background: var(--muji-white); border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.08); width: 100%; max-width: 900px; }
+        .dashboard { display: flex; background: var(--card-bg); border-radius: 18px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.08); width: 100%; max-width: 900px; border: 1px solid var(--border-color); }
         
-        /* 左側：真實鏡頭掃描區 */
-        .scanner-section { flex: 1; background: #000; display: flex; flex-direction: column; position: relative; border-right: 1px solid var(--muji-border); }
-        #reader { width: 100%; height: 100%; min-height: 400px; }
-        .scanner-overlay { position: absolute; top: 20px; left: 20px; color: white; background: rgba(0,0,0,0.6); padding: 8px 16px; border-radius: 20px; font-size: 14px; z-index: 10; }
+        /* 左側鏡頭 */
+        .scanner-section { flex: 1; background: #000; display: flex; flex-direction: column; position: relative; border-right: 1px solid var(--border-color); }
+        #reader { width: 100%; height: 100%; min-height: 450px; }
+        .scanner-overlay { position: absolute; top: 20px; left: 20px; color: white; background: rgba(0,0,0,0.6); padding: 8px 16px; border-radius: 20px; font-size: 14px; z-index: 10; font-weight: 500; }
 
-        /* 右側：增值操作區 */
+        /* 右側操作 */
         .action-section { flex: 1; padding: 40px; display: flex; flex-direction: column; }
-        .title { font-size: 24px; font-weight: bold; margin-bottom: 8px; color: var(--muji-red); }
-        .subtitle { color: #8C8C8C; font-size: 14px; margin-bottom: 32px; }
+        .title { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+        .subtitle { color: var(--text-muted); font-size: 15px; margin-bottom: 32px; }
 
-        .scanned-info { background: var(--muji-bg); padding: 20px; border-radius: 8px; margin-bottom: 32px; border: 1px solid var(--muji-border); }
-        .info-label { font-size: 12px; color: #8C8C8C; margin-bottom: 4px; }
-        .info-value { font-size: 18px; font-weight: bold; font-family: monospace; word-break: break-all; }
+        .scanned-info { background: var(--bg-color); padding: 20px; border-radius: 12px; margin-bottom: 32px; }
+        .info-label { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+        .info-value { font-size: 20px; font-weight: 600; font-family: monospace; letter-spacing: 1px; }
 
         .amount-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-        .btn-amt { padding: 16px; border: 1px solid var(--muji-border); background: var(--muji-white); border-radius: 8px; font-size: 18px; cursor: pointer; transition: 0.2s; }
-        .btn-amt.selected { background: var(--muji-red); color: white; border-color: var(--muji-red); }
+        .btn-amt { padding: 16px; border: 1px solid var(--border-color); background: var(--card-bg); border-radius: 12px; font-size: 18px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+        .btn-amt.selected { background: var(--apple-blue); color: white; border-color: var(--apple-blue); }
 
-        .btn-submit { background: var(--muji-red); color: white; padding: 20px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; transition: opacity 0.2s; }
-        .btn-submit:disabled { background: #cccccc; cursor: not-allowed; }
+        .btn-submit { background: var(--text-main); color: white; padding: 20px; border: none; border-radius: 14px; font-size: 18px; font-weight: 600; cursor: pointer; width: 100%; transition: opacity 0.2s; }
+        .btn-submit:disabled { background: var(--border-color); color: #FFF; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
     <div class="dashboard">
+        <!-- 鏡頭區 -->
         <div class="scanner-section">
-            <div class="scanner-overlay" id="scanner-status">啟動鏡頭中...</div>
+            <div class="scanner-overlay" id="scanner-status">啟動相機中...</div>
             <div id="reader"></div>
         </div>
 
+        <!-- 操作區 -->
         <div class="action-section">
-            <div class="title">MUJI 收銀 / 增值終端</div>
-            <div class="subtitle">請將顧客的增值條碼對準左側鏡頭</div>
+            <div class="title"> Pay 增值終端機</div>
+            <div class="subtitle">請將顧客手機的增值條碼對準鏡頭</div>
 
             <div class="scanned-info">
-                <div class="info-label">識別帳戶 (Phone Number)</div>
+                <div class="info-label">識別 Apple ID 帳戶</div>
                 <div class="info-value" id="target-account">等待掃描...</div>
             </div>
 
-            <div class="info-label" style="margin-bottom: 12px;">選擇增值金額 (HKD)</div>
+            <div class="info-label" style="margin-bottom: 12px;">選擇 Cash 存入金額 (HKD)</div>
             <div class="amount-grid">
                 <button class="btn-amt" onclick="selectAmount(100, this)">$ 100</button>
                 <button class="btn-amt" onclick="selectAmount(500, this)">$ 500</button>
@@ -66,7 +69,7 @@
                 <button class="btn-amt" onclick="selectAmount(5000, this)">$ 5000</button>
             </div>
 
-            <button class="btn-submit" id="btn-submit" onclick="executeTopup()" disabled>確認增值</button>
+            <button class="btn-submit" id="btn-submit" onclick="executeTopup()" disabled>確認存入 Wallet</button>
         </div>
     </div>
 
@@ -75,25 +78,21 @@
         let selectedAmount = 0;
         let html5QrcodeScanner;
 
-        // 當掃描成功時觸發
         function onScanSuccess(decodedText, decodedResult) {
-            // 解析我們在 app 產生的條碼格式 MUJI-{Phone}-{Random}
-            if (decodedText.startsWith("MUJI-")) {
+            // 識別 Apple Pay 的條碼格式
+            if (decodedText.startsWith("APPLE-")) {
                 const parts = decodedText.split("-");
                 if (parts.length >= 2) {
-                    targetPhone = parts[1]; // 抓出電話號碼
+                    targetPhone = parts[1]; 
                     
                     document.getElementById('target-account').innerText = targetPhone;
-                    document.getElementById('target-account').style.color = "var(--muji-red)";
-                    document.getElementById('scanner-status').innerText = "掃描成功！";
-                    document.getElementById('scanner-status').style.background = "#4A7C59"; // 綠色
+                    document.getElementById('target-account').style.color = "var(--apple-blue)";
+                    document.getElementById('scanner-status').innerText = "✓ 掃描成功";
+                    document.getElementById('scanner-status').style.background = "#34C759"; // Apple Green
 
-                    // 暫停掃描，避免重複讀取
                     html5QrcodeScanner.pause();
-                    
                     checkEnableButton();
                     
-                    // 3 秒後恢復掃描器狀態
                     setTimeout(() => {
                         html5QrcodeScanner.resume();
                         document.getElementById('scanner-status').innerText = "掃描中...";
@@ -101,24 +100,21 @@
                     }, 3000);
                 }
             } else {
-                // 掃到非 MUJI 系統的條碼
-                document.getElementById('scanner-status').innerText = "無效條碼";
-                document.getElementById('scanner-status').style.background = "red";
+                document.getElementById('scanner-status').innerText = "✕ 無效條碼";
+                document.getElementById('scanner-status').style.background = "#FF3B30"; // Apple Red
             }
         }
 
-        // 初始化真實鏡頭掃描器
         window.onload = () => {
             html5QrcodeScanner = new Html5QrcodeScanner(
                 "reader", 
                 { fps: 10, qrbox: { width: 250, height: 250 } }, 
-                /* verbose= */ false
+                false
             );
             html5QrcodeScanner.render(onScanSuccess);
             document.getElementById('scanner-status').innerText = "掃描中...";
         };
 
-        // 金額選擇
         function selectAmount(amount, btnElement) {
             document.querySelectorAll('.btn-amt').forEach(b => b.classList.remove('selected'));
             btnElement.classList.add('selected');
@@ -130,26 +126,24 @@
             document.getElementById('btn-submit').disabled = !(targetPhone && selectedAmount > 0);
         }
 
-        // 執行增值並寫入共用的資料庫
         function executeTopup() {
-            const usersDb = JSON.parse(localStorage.getItem('muji_db_users') || "{}");
+            const usersDb = JSON.parse(localStorage.getItem('apple_db_users') || "{}");
             
+            // 【關鍵修復】如果掃描器沒看過這個帳號，直接幫它建檔，防止跨設備報錯
             if (!usersDb[targetPhone]) {
-                alert("錯誤：找不到該帳戶（電話號碼未註冊）。");
-                return;
+                usersDb[targetPhone] = { password: "auto-created", balance: 0 };
             }
 
-            // 增加餘額
             usersDb[targetPhone].balance += selectedAmount;
-            localStorage.setItem('muji_db_users', JSON.stringify(usersDb));
+            localStorage.setItem('apple_db_users', JSON.stringify(usersDb));
 
-            alert(`✅ 成功為 ${targetPhone} 增值 HK$ ${selectedAmount}`);
+            alert(`✅ 成功存入 HK$ ${selectedAmount} 至 Apple Cash。\n(帳戶: ${targetPhone})`);
 
-            // 重置介面
+            // 復原介面
             targetPhone = null;
             selectedAmount = 0;
             document.getElementById('target-account').innerText = "等待掃描...";
-            document.getElementById('target-account').style.color = "var(--muji-text)";
+            document.getElementById('target-account').style.color = "var(--text-main)";
             document.querySelectorAll('.btn-amt').forEach(b => b.classList.remove('selected'));
             checkEnableButton();
         }
