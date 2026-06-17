@@ -3,70 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>員工系統 - 增值管理</title>
+    <title>Apple Pay 風格 - 客戶錢包</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #1c1c1e; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; }
+        .apple-card { background: linear-gradient(135deg, #2c2c2e 0%, #1c1c1e 100%); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
         .hidden { display: none !important; }
     </style>
 </head>
-<body class="text-white flex justify-center min-h-screen pb-10">
+<body class="text-gray-900 flex justify-center min-h-screen pb-10">
 
     <div class="w-full max-w-md p-4 flex flex-col pt-8">
         
-        <div id="staff-auth" class="bg-gray-800 rounded-3xl p-8 shadow-lg mt-10">
-            <h1 class="text-2xl font-bold mb-6 text-center">員工登入</h1>
+        <div id="auth-section" class="bg-white rounded-3xl p-8 shadow-sm">
+            <h1 class="text-2xl font-bold mb-6 text-center">登入 / 註冊</h1>
             <div class="flex flex-col gap-4">
-                <input type="text" id="staff-id" placeholder="員工帳號" class="p-3 bg-gray-700 rounded-xl outline-none text-white placeholder-gray-400">
-                <input type="password" id="staff-pass" placeholder="密碼" class="p-3 bg-gray-700 rounded-xl outline-none text-white placeholder-gray-400">
-                <button id="btn-staff-login" class="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl font-semibold mt-2 transition">系統登入</button>
-                <p id="staff-error" class="text-red-400 text-sm text-center"></p>
+                <input type="text" id="auth-name" placeholder="您的名稱 (僅註冊需填寫)" class="p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 ring-blue-500">
+                <input type="tel" id="auth-phone" placeholder="電話號碼" class="p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 ring-blue-500">
+                <input type="password" id="auth-password" placeholder="密碼" class="p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 ring-blue-500">
+                <button id="btn-login" class="bg-black text-white p-3 rounded-xl font-semibold mt-2">登入</button>
+                <button id="btn-register" class="bg-gray-200 text-black p-3 rounded-xl font-semibold">註冊</button>
+                <p id="auth-error" class="text-red-500 text-sm text-center"></p>
             </div>
         </div>
 
-        <div id="staff-dashboard" class="hidden flex flex-col gap-6">
+        <div id="app-section" class="hidden flex flex-col gap-6">
             <div class="flex justify-between items-center px-2">
-                <h1 class="text-xl font-bold">增值終端機</h1>
-                <span class="text-gray-400 text-sm">員工: P001</span>
+                <h1 class="text-2xl font-bold text-black" id="greeting">您好</h1>
+                <button id="btn-logout" class="text-sm text-blue-600 font-semibold">登出</button>
             </div>
 
-            <div class="bg-gray-800 rounded-3xl p-4 shadow-lg">
-                <h2 class="text-lg font-semibold mb-3 text-center">掃描客戶二維碼</h2>
-                <div id="reader" class="w-full rounded-2xl overflow-hidden border-2 border-gray-700"></div>
-            </div>
-
-            <div id="topup-panel" class="hidden bg-gray-800 rounded-3xl p-6 shadow-lg">
-                <h2 class="text-lg font-semibold mb-4 border-b border-gray-700 pb-2">客戶資訊</h2>
-                <div class="flex justify-between mb-2">
-                    <span class="text-gray-400">名稱:</span>
-                    <span id="info-name" class="font-bold">---</span>
+            <div class="apple-card rounded-3xl p-6 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-6 opacity-20 text-4xl">Pay</div>
+                <p class="text-sm text-gray-300 mb-1">可用餘額</p>
+                <div class="flex items-end gap-2 mb-6">
+                    <span class="text-4xl font-bold" id="display-balance">$0.00</span>
+                    <span class="text-sm text-gray-400 pb-1">HKD</span>
                 </div>
-                <div class="flex justify-between mb-2">
-                    <span class="text-gray-400">電話:</span>
-                    <span id="info-phone" class="font-bold">---</span>
-                </div>
-                <div class="flex justify-between mb-6">
-                    <span class="text-gray-400">當前餘額:</span>
-                    <span id="info-balance" class="font-bold text-green-400">$0.00</span>
-                </div>
-
-                <div class="flex flex-col gap-3">
-                    <input type="number" id="topup-amount" placeholder="輸入增值金額" class="p-4 bg-gray-700 rounded-xl outline-none text-xl text-center font-bold text-white">
-                    <button id="btn-submit-topup" class="bg-white text-black p-4 rounded-xl font-bold text-lg hover:bg-gray-200 transition">確認增值</button>
-                    <p id="topup-msg" class="text-center text-sm font-semibold mt-2"></p>
+                <div class="flex gap-3">
+                    <button id="nav-topup" class="bg-white text-black px-4 py-2 rounded-full font-semibold text-sm flex-1">增值</button>
+                    <button id="nav-pay" class="bg-white text-black px-4 py-2 rounded-full font-semibold text-sm flex-1">支付</button>
                 </div>
             </div>
-            
-            <button id="btn-reset-scan" class="hidden bg-gray-700 text-white p-3 rounded-xl font-semibold">重新掃描</button>
+
+            <div id="content-area" class="bg-white rounded-3xl p-6 shadow-sm flex flex-col items-center">
+                <h2 id="view-title" class="text-lg font-bold mb-4">請選擇操作</h2>
+                <p id="view-desc" class="text-gray-500 text-sm text-center mb-6">點擊上方的增值或支付以產生專屬二維碼。</p>
+                <div id="qrcode-container" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hidden">
+                    <div id="qrcode"></div>
+                </div>
+            </div>
         </div>
 
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getDatabase, ref, get, update, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBDnUjBwJkLhyvLGRVOHJuAWXLCV2F_WIg",
@@ -75,135 +70,106 @@
             storageBucket: "apple-pay-1c569.firebasestorage.app",
             messagingSenderId: "556609511982",
             appId: "1:556609511982:web:c5cd4cf609c220bacbf5bf",
-            measurementId: "G-6MPCREG7GW",
-            databaseURL: "https://apple-pay-1c569-default-rtdb.firebaseio.com"
+            measurementId: "G-6MPCREG7GW"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getDatabase(app);
-        
-        let html5QrcodeScanner;
-        let targetUid = null;
+        const db = getFirestore(app);
 
-        document.getElementById('btn-staff-login').addEventListener('click', async () => {
-            const id = document.getElementById('staff-id').value;
-            const pass = document.getElementById('staff-pass').value;
+        // UI 元素
+        const authSection = document.getElementById('auth-section');
+        const appSection = document.getElementById('app-section');
+        const errTxt = document.getElementById('auth-error');
+        let currentUserId = null;
+        let qrCodeObj = null;
+
+        // 登入/註冊邏輯
+        const getFakeEmail = (phone) => `${phone}@applepay-fake.com`;
+
+        document.getElementById('btn-register').addEventListener('click', async () => {
+            const name = document.getElementById('auth-name').value;
+            const phone = document.getElementById('auth-phone').value;
+            const pass = document.getElementById('auth-password').value;
+            if (!name || !phone || !pass) return errTxt.innerText = "請填寫名稱、電話與密碼";
             
-            if (id === 'P001' && pass === 'P001') {
-                try {
-                    await signInAnonymously(auth);
-                    document.getElementById('staff-auth').classList.add('hidden');
-                    document.getElementById('staff-dashboard').classList.remove('hidden');
-                    initScanner();
-                } catch (error) {
-                    document.getElementById('staff-error').innerText = "系統連線錯誤。";
-                }
-            } else {
-                document.getElementById('staff-error').innerText = "帳號或密碼錯誤。";
-            }
-        });
-
-        function initScanner() {
-            html5QrcodeScanner = new Html5QrcodeScanner(
-                "reader", 
-                { fps: 10, qrbox: {width: 250, height: 250}, aspectRatio: 1.0 },
-                false
-            );
-            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-        }
-
-        async function onScanSuccess(decodedText, decodedResult) {
             try {
-                const data = JSON.parse(decodedText);
-                if (data.type === "TOPUP" && data.uid) {
-                    html5QrcodeScanner.clear();
-                    document.getElementById('reader').classList.add('hidden');
-                    
-                    targetUid = data.uid;
-                    await loadClientInfo(targetUid);
-                } else {
-                    alert("請掃描正確的「增值二維碼」。\n此二維碼類型為: " + (data.type || "未知"));
-                }
-            } catch (e) {
-                console.log("非系統支援的二維碼格式。");
-            }
-        }
-
-        function onScanFailure(error) {
-        }
-
-        async function loadClientInfo(uid) {
-            const snapshot = await get(ref(db, 'users/' + uid));
-            
-            if (snapshot.exists()) {
-                const userData = snapshot.val();
-                document.getElementById('info-name').innerText = userData.name;
-                document.getElementById('info-phone').innerText = userData.phone;
-                document.getElementById('info-balance').innerText = `$${parseFloat(userData.balance).toFixed(2)}`;
-                
-                document.getElementById('topup-panel').classList.remove('hidden');
-                document.getElementById('btn-reset-scan').classList.remove('hidden');
-            } else {
-                alert("找不到該客戶資料。");
-                resetScanner();
-            }
-        }
-
-        document.getElementById('btn-submit-topup').addEventListener('click', async () => {
-            const amountInput = document.getElementById('topup-amount').value;
-            const amount = parseFloat(amountInput);
-            const msgEl = document.getElementById('topup-msg');
-            
-            if (isNaN(amount) || amount <= 0) {
-                msgEl.innerText = "請輸入有效的增值金額。";
-                msgEl.className = "text-center text-sm font-semibold mt-2 text-red-400";
-                return;
-            }
-
-            msgEl.innerText = "處理中...";
-            msgEl.className = "text-center text-sm font-semibold mt-2 text-blue-400";
-
-            try {
-                const userRef = ref(db, 'users/' + targetUid);
-                const snapshot = await get(userRef);
-                const currentBalance = parseFloat(snapshot.val().balance);
-                const newBalance = currentBalance + amount;
-
-                await update(userRef, {
-                    balance: newBalance
+                const userCredential = await createUserWithEmailAndPassword(auth, getFakeEmail(phone), pass);
+                await setDoc(doc(db, "users", userCredential.user.uid), {
+                    name: name,
+                    phone: phone,
+                    balance: 0
                 });
-
-                await push(ref(db, 'logs'), {
-                    userId: targetUid,
-                    staffId: "P001",
-                    amount: amount,
-                    type: "TOPUP",
-                    timestamp: serverTimestamp()
-                });
-
-                msgEl.innerText = "增值成功！";
-                msgEl.className = "text-center text-sm font-semibold mt-2 text-green-400";
-                document.getElementById('info-balance').innerText = `$${newBalance.toFixed(2)}`;
-                document.getElementById('topup-amount').value = "";
-                
             } catch (error) {
-                msgEl.innerText = "增值失敗，請重試。";
-                msgEl.className = "text-center text-sm font-semibold mt-2 text-red-400";
+                errTxt.innerText = "註冊失敗: " + error.message;
             }
         });
 
-        document.getElementById('btn-reset-scan').addEventListener('click', resetScanner);
+        document.getElementById('btn-login').addEventListener('click', async () => {
+            const phone = document.getElementById('auth-phone').value;
+            const pass = document.getElementById('auth-password').value;
+            if (!phone || !pass) return errTxt.innerText = "請填寫電話與密碼";
+            
+            try {
+                await signInWithEmailAndPassword(auth, getFakeEmail(phone), pass);
+            } catch (error) {
+                errTxt.innerText = "登入失敗: " + error.message;
+            }
+        });
 
-        function resetScanner() {
-            targetUid = null;
-            document.getElementById('topup-panel').classList.add('hidden');
-            document.getElementById('btn-reset-scan').classList.add('hidden');
-            document.getElementById('reader').classList.remove('hidden');
-            document.getElementById('topup-msg').innerText = "";
-            document.getElementById('topup-amount').value = "";
-            initScanner();
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+        // 監聽狀態與資料同步
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                authSection.classList.add('hidden');
+                appSection.classList.remove('hidden');
+                
+                // 即時同步餘額與名稱
+                onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        document.getElementById('greeting').innerText = `您好, ${data.name}`;
+                        document.getElementById('display-balance').innerText = `$${parseFloat(data.balance).toFixed(2)}`;
+                    }
+                });
+            } else {
+                currentUserId = null;
+                authSection.classList.remove('hidden');
+                appSection.classList.add('hidden');
+            }
+        });
+
+        // 產生二維碼
+        function generateQR(type) {
+            const qrContainer = document.getElementById('qrcode-container');
+            const qrDiv = document.getElementById('qrcode');
+            qrContainer.classList.remove('hidden');
+            qrDiv.innerHTML = "";
+            
+            const dataString = JSON.stringify({ type: type, uid: currentUserId });
+            qrCodeObj = new QRCode(qrDiv, {
+                text: dataString,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
         }
+
+        document.getElementById('nav-topup').addEventListener('click', () => {
+            document.getElementById('view-title').innerText = "增值二維碼";
+            document.getElementById('view-desc').innerText = "請向員工出示此二維碼進行增值操作。";
+            generateQR("TOPUP");
+        });
+
+        document.getElementById('nav-pay').addEventListener('click', () => {
+            document.getElementById('view-title').innerText = "支付二維碼";
+            document.getElementById('view-desc').innerText = "請向掃碼設備出示此二維碼進行付款。";
+            generateQR("PAY");
+        });
     </script>
 </body>
 </html>
